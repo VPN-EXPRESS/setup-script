@@ -22,6 +22,7 @@ if [[ "${BASH_SOURCE[0]}" == "/dev/fd/"* ]]; then
     download_lib "ssl.sh"
     download_lib "nginx.sh"
     download_lib "panel.sh"
+    download_lib "inbounds.sh"
 else
     # Running locally
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,6 +38,7 @@ source "$LIB_DIR/system.sh"
 source "$LIB_DIR/ssl.sh"
 source "$LIB_DIR/nginx.sh"
 source "$LIB_DIR/panel.sh"
+source "$LIB_DIR/inbounds.sh"
 
 # Main entry point
 main() {
@@ -83,6 +85,12 @@ main() {
 
     step 10 "Starting services"
     start_services
+
+    step 11 "Creating VLESS Reality inbound"
+    create_vless_inbound
+
+    step 12 "Creating Hysteria2 inbound"
+    create_hysteria_inbound
 
     # Show success banner
     show_success "$DOMAIN" "$IP" "$PANEL_PORT" "$USERNAME" "$PASSWORD" "$WEB_BASE_PATH" "$DB_TYPE" "$API_TOKEN"
