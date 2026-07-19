@@ -49,7 +49,7 @@ debug() {
 # Step indicator
 step() {
     local num=$1
-    local total=12
+    local total=11
     local desc="$2"
     echo ""
     echo -e "${BOLD}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
