@@ -86,9 +86,6 @@ main() {
     step 10 "Starting services"
     start_services
 
-    step 11 "Creating VLESS Reality inbound"
-    create_vless_inbound
-
     step 12 "Creating Hysteria2 inbound"
     create_hysteria_inbound
 
