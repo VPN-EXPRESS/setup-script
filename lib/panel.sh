@@ -44,9 +44,6 @@ install_panel() {
         exit 1
     fi
 
-    log "Allowing panel port in firewall..."
-    ufw allow "$PANEL_PORT/tcp" >/dev/null 2>&1
-
     info "Port:        $PANEL_PORT"
     info "Web Path:    /$WEB_BASE_PATH"
     info "Database:    $DB_TYPE"

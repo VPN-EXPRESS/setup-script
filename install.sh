@@ -62,31 +62,28 @@ main() {
     step 2 "Installing dependencies"
     install_dependencies
 
-    step 3 "Configuring firewall"
-    configure_firewall
-
-    step 4 "Checking DNS resolution"
+    step 3 "Checking DNS resolution"
     check_dns "$DOMAIN" "$IP"
 
-    step 5 "Installing acme.sh"
+    step 4 "Installing acme.sh"
     install_acme "$ACME_EMAIL"
 
-    step 6 "Installing 3X-UI panel"
+    step 5 "Installing 3X-UI panel"
     install_panel "$USERNAME" "$PASSWORD"
 
-    step 7 "Obtaining SSL certificate"
+    step 6 "Obtaining SSL certificate"
     obtain_ssl "$DOMAIN" "$ACME_EMAIL"
 
-    step 8 "Installing certificate"
+    step 7 "Installing certificate"
     install_cert "$DOMAIN"
 
-    step 9 "Configuring Nginx"
+    step 8 "Configuring Nginx"
     configure_nginx "$DOMAIN" "$PANEL_PORT"
 
-    step 10 "Starting services"
+    step 9 "Starting services"
     start_services
 
-    step 12 "Creating Hysteria2 inbound"
+    step 10 "Creating Hysteria2 inbound"
     create_hysteria_inbound
 
     # Show success banner

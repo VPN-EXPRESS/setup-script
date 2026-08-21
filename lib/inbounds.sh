@@ -211,11 +211,6 @@ create_hysteria_inbound() {
     log "Inbound created successfully!"
     info "  Inbound ID: ${INBOUND_ID:-N/A}"
 
-    # Firewall
-    log "Opening port $PORT in firewall (UDP)..."
-    ufw allow "$PORT/udp" >/dev/null 2>&1 || true
-    ufw allow "$PORT/tcp" >/dev/null 2>&1 || true
-
     # Summary
     echo ""
     echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"

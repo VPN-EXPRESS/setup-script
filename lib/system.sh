@@ -13,31 +13,12 @@ update_system() {
 
 # Install dependencies
 install_dependencies() {
-    local packages="curl socat nginx ufw cron bc"
+    local packages="curl socat nginx cron bc"
 
     log "Installing: $packages"
     apt install -y -qq $packages
 
     log "Dependencies installed"
-}
-
-# Configure UFW firewall
-configure_firewall() {
-    log "Setting default policies..."
-
-    ufw default deny incoming >/dev/null 2>&1
-    ufw default allow outgoing >/dev/null 2>&1
-
-    log "Allowing essential ports..."
-    ufw allow ssh >/dev/null 2>&1
-    ufw allow 80/tcp >/dev/null 2>&1
-    ufw allow 443/tcp >/dev/null 2>&1
-
-    log "Enabling UFW..."
-    ufw --force enable >/dev/null 2>&1
-
-    info "SSH (22), HTTP (80), HTTPS (443) allowed"
-    log "UFW firewall configured"
 }
 
 # Check DNS resolution
