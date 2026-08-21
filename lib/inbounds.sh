@@ -213,7 +213,9 @@ create_hysteria_inbound() {
         return 1
     fi
     HYSTERIA_INBOUND_ID="$INBOUND_ID"
-    printf '\nHYSTERIA_INBOUND_ID=%q\n' "$HYSTERIA_INBOUND_ID" >> /etc/x-ui/install-result.env
+    HYSTERIA_INBOUND_PORT="$PORT"
+    printf '\nHYSTERIA_INBOUND_ID=%q\nHYSTERIA_INBOUND_PORT=%q\n' \
+        "$HYSTERIA_INBOUND_ID" "$HYSTERIA_INBOUND_PORT" >> /etc/x-ui/install-result.env
     log "Inbound created successfully!"
     info "  Inbound ID: ${INBOUND_ID:-N/A}"
 
