@@ -208,6 +208,12 @@ create_hysteria_inbound() {
     fi
 
     INBOUND_ID=$(json_get "$ADD_RESP" '.obj.id')
+    if [ -z "$INBOUND_ID" ]; then
+        err "Inbound was created but its ID was not returned"
+        return 1
+    fi
+    HYSTERIA_INBOUND_ID="$INBOUND_ID"
+    printf '\nHYSTERIA_INBOUND_ID=%q\n' "$HYSTERIA_INBOUND_ID" >> /etc/x-ui/install-result.env
     log "Inbound created successfully!"
     info "  Inbound ID: ${INBOUND_ID:-N/A}"
 

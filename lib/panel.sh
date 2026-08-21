@@ -5,6 +5,7 @@ PANEL_PORT=""
 WEB_BASE_PATH=""
 DB_TYPE=""
 API_TOKEN=""
+HYSTERIA_INBOUND_ID=""
 
 # Install 3X-UI panel
 install_panel() {
