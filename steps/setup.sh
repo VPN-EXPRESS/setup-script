@@ -56,15 +56,15 @@ _run_step "3x-ui"       "$SCRIPT_DIR/xui.sh"
 # ─── Save credentials ────────────────────────────────────────────────────────
 _cert_path=$(caddy_cert_file)
 cat > /root/setup-result.env <<CREDS
-Installation date : $(date '+%Y-%m-%d %H:%M:%S')
-Panel URL         : https://${DOMAIN}${PANEL_PATH}
-Username          : ${PANEL_USER}
-Password          : ${PANEL_PASS}
-Selfsteal         : https://${DOMAIN}
-Certificate       : ${_cert_path:-<Caddy directory: ${CADDY_DATA_DIR}>}
-WARP SOCKS5       : 127.0.0.1:${WARP_PROXY_PORT}
-Opera SOCKS5      : 127.0.0.1:${OPERA_PROXY_PORT} (region: ${OPERA_REGION})
-Tor SOCKS5        : 127.0.0.1:${TOR_PORT}
+Installation_date="$(date '+%Y-%m-%d %H:%M:%S')"
+Panel_URL="https://${DOMAIN}${PANEL_PATH}"
+Username="${PANEL_USER}"
+Password="${PANEL_PASS}"
+Selfsteal="https://${DOMAIN}"
+Certificate="${_cert_path:-<Caddy directory: ${CADDY_DATA_DIR}>}"
+WARP_SOCKS5="127.0.0.1:${WARP_PROXY_PORT}"
+Opera_SOCKS5="127.0.0.1:${OPERA_PROXY_PORT} (region: ${OPERA_REGION})"
+Tor_SOCKS5="127.0.0.1:${TOR_PORT}"
 CREDS
 chmod 600 /root/setup-result.env
 
