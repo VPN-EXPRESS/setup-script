@@ -92,9 +92,9 @@ if [[ -d "$TMP_DIR/caddy-data" ]]; then
 fi
 
 # Restore credentials file
-if [[ -f "$TMP_DIR/3xui-credentials.txt" ]]; then
-    cp "$TMP_DIR/3xui-credentials.txt" /root/3xui-credentials.txt
-    chmod 600 /root/3xui-credentials.txt
+if [[ -f "$TMP_DIR/setup-result.env" ]]; then
+    cp "$TMP_DIR/setup-result.env" /root/setup-result.env
+    chmod 600 /root/setup-result.env
 fi
 
 # Restore UFW rules

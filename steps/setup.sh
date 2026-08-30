@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # All stdout/stderr output is redirected to the full log file.
 # info/success/warn/die write to the filtered log only.
 LOGFILE=/root/3xui-install.log
-FULL_LOGFILE=/root/3xui-install-full.log
+FULL_LOGFILE=/root/install.log
 export LOGFILE FULL_LOGFILE
 mkdir -p "$(dirname "$LOGFILE")"
 mkdir -p "$(dirname "$FULL_LOGFILE")"
@@ -55,7 +55,7 @@ _run_step "3x-ui"       "$SCRIPT_DIR/xui.sh"
 
 # ─── Save credentials ────────────────────────────────────────────────────────
 _cert_path=$(caddy_cert_file)
-cat > /root/3xui-credentials.txt <<CREDS
+cat > /root/setup-result.env <<CREDS
 Installation date : $(date '+%Y-%m-%d %H:%M:%S')
 Panel URL         : https://${DOMAIN}${PANEL_PATH}
 Username          : ${PANEL_USER}
@@ -66,7 +66,7 @@ WARP SOCKS5       : 127.0.0.1:${WARP_PROXY_PORT}
 Opera SOCKS5      : 127.0.0.1:${OPERA_PROXY_PORT} (region: ${OPERA_REGION})
 Tor SOCKS5        : 127.0.0.1:${TOR_PORT}
 CREDS
-chmod 600 /root/3xui-credentials.txt
+chmod 600 /root/setup-result.env
 
 echo "--- SETUP DONE ---"
 printf "%s\n" "--- SETUP DONE ---" >>"$LOGFILE"

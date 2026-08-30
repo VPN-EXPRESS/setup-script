@@ -72,7 +72,7 @@ success "SSH is reachable."
 
 # ─── Бэкап при повторном деплое ──────────────────────────────────────────────
 _has_existing=$(ssh "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" \
-    'test -f /root/3xui-credentials.txt && echo yes || echo no' 2>/dev/null || echo no)
+    'test -f /root/setup-result.env && echo yes || echo no' 2>/dev/null || echo no)
 if [[ "$_has_existing" == "yes" ]]; then
     warn "An existing installation was detected on the server."
     read -rp "Create a backup before deployment? [Y/n] " _bk_ask
@@ -103,12 +103,12 @@ echo
 info "Starting setup.sh on the server (domain: ${DOMAIN})..."
 echo
 
-info "Progress and detailed logs are available in /root/3xui-install-full.log (press Ctrl+C to abort)..."
+info "Progress and detailed logs are available in /root/install.log (press Ctrl+C to abort)..."
 echo
 
 if ssh -t "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" \
     "find ${remote_dir_q} -name '*.sh' -exec chmod +x {} +; \
-     rm -f /root/3xui-install.log /root/3xui-install-full.log; \
+    rm -f /root/3xui-install.log /root/install.log; \
      touch /root/3xui-install.log; \
      ${remote_env_prefix} bash ${remote_dir_q}/setup.sh"; then
     echo
@@ -117,7 +117,7 @@ if ssh -t "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" \
     # ─── Results ─────────────────────────────────────────────────────────────────────
     echo
     info "Credentials:"
-    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" "cat /root/3xui-credentials.txt 2>/dev/null || echo '(credentials file not found)'"
+    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" "cat /root/setup-result.env 2>/dev/null || echo '(credentials file not found)'"
 
     # ─── Healthcheck ──────────────────────────────────────────────────────────
     # Validate the local HTTPS backend for x-ui. This avoids hairpin NAT issues and
@@ -143,5 +143,5 @@ HCHECK
     fi
 else
     echo
-    die "Deployment did not complete. Review the log on the server: /root/3xui-install-full.log"
+    die "Deployment did not complete. Review the log on the server: /root/install.log"
 fi

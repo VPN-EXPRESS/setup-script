@@ -34,7 +34,7 @@ fi
 [[ -d /var/www/html  ]] && cp -a /var/www/html  "$TMP_DIR/caddy-www"
 [[ -d /var/lib/caddy ]] && cp -a /var/lib/caddy "$TMP_DIR/caddy-data"
 
-[[ -f /root/3xui-credentials.txt ]] && cp /root/3xui-credentials.txt "$TMP_DIR/"
+[[ -f /root/setup-result.env ]] && cp /root/setup-result.env "$TMP_DIR/"
 
 if command -v ufw &>/dev/null && ufw status | grep -q 'Status: active'; then
     ufw status numbered > "$TMP_DIR/ufw-rules.txt"

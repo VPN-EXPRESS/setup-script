@@ -105,9 +105,9 @@ if [[ -d "$TMP_DIR/caddy-data" ]]; then
     id caddy &>/dev/null && chown -R caddy:caddy /var/lib/caddy 2>/dev/null || true
 fi
 
-if [[ -f "$TMP_DIR/3xui-credentials.txt" ]]; then
-    echo "[INFO] Restoring 3xui-credentials.txt..."
-    cp "$TMP_DIR/3xui-credentials.txt" /root/3xui-credentials.txt
+if [[ -f "$TMP_DIR/setup-result.env" ]]; then
+    echo "[INFO] Restoring setup-result.env..."
+    cp "$TMP_DIR/setup-result.env" /root/setup-result.env
 fi
 
 echo "[INFO] Starting services..."

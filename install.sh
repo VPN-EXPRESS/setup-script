@@ -107,7 +107,7 @@ chmod +x "$STEPS_DIR"/*.sh
 
 echo
 [[ "$QUIET" -eq 0 ]] && info "Starting installation on this server (domain: ${DOMAIN})..."
-[[ "$QUIET" -eq 0 ]] && info "Progress and detailed logs are written to /root/3xui-install-full.log (press Ctrl+C to abort)..."
+[[ "$QUIET" -eq 0 ]] && info "Progress and detailed logs are written to /root/install.log (press Ctrl+C to abort)..."
 echo
 
 if [[ "$VERBOSE" -eq 1 ]]; then
@@ -122,9 +122,9 @@ if "${setup_command[@]}"; then
         success "Installation completed successfully."
         echo
         info "Credentials:"
-        cat /root/3xui-credentials.txt 2>/dev/null || echo "(credentials file not found)"
+        cat /root/setup-result.env 2>/dev/null || echo "(credentials file not found)"
     fi
 else
     echo
-    die "Installation did not complete. Review the log: /root/3xui-install-full.log"
+    die "Installation did not complete. Review the log: /root/install.log"
 fi

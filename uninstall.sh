@@ -98,7 +98,7 @@ rm -rf /etc/systemd/system/opera-proxy.service.d 2>/dev/null || true
 print_section "Removing application files"
 rm -rf /usr/local/x-ui /etc/x-ui /var/lib/caddy /etc/caddy /var/www/html /var/lib/tor /etc/tor /var/lib/cloudflare-warp /etc/cloudflared 2>/dev/null || true
 rm -rf /var/lib/opera-proxy /opt/opera-proxy /usr/local/share/opera-proxy* 2>/dev/null || true
-rm -f /root/3xui-credentials.txt /root/3xui-install.log /root/3xui-install-full.log 2>/dev/null || true
+rm -f /root/setup-result.env /root/3xui-install.log /root/install.log 2>/dev/null || true
 
 print_section "Removing package repositories and keys"
 rm -f /etc/apt/sources.list.d/caddy-stable.list /etc/apt/sources.list.d/cloudflare-client.list 2>/dev/null || true

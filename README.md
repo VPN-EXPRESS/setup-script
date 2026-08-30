@@ -68,7 +68,7 @@ bash install.sh \
 
 - URL панели
 - логин и пароль
-- параметры доступа, сохраненные в `/root/3xui-credentials.txt`
+- параметры доступа, сохраненные в `/root/setup-result.env`
 
 ## Способы установки
 
@@ -127,7 +127,7 @@ HY2_PORT=63001 \
 bash deploy.sh <IP>
 ```
 
-`deploy.sh` копирует содержимое `steps/` на сервер, запускает `setup.sh` и сохраняет итоговые данные доступа в `/root/3xui-credentials.txt`.
+`deploy.sh` копирует содержимое `steps/` на сервер, запускает `setup.sh` и сохраняет итоговые данные доступа в `/root/setup-result.env`.
 
 ## Архитектура и компоненты
 
@@ -161,9 +161,9 @@ GeoIP/GeoSite для подписок и маршрутизации исполь
 После успешного развёртывания вы получите:
 
 - Панель: `https://<DOMAIN>/<PANEL_PATH>/`
-- Логин, пароль и параметры доступа в `/root/3xui-credentials.txt`
+- Логин, пароль и параметры доступа в `/root/setup-result.env`
 - Логи установки в `/root/3xui-install.log`
-- Полный журнал в `/root/3xui-install-full.log`
+- Полный журнал в `/root/install.log`
 - Данные x-ui в `/etc/x-ui/x-ui.db`
 - Бинарники x-ui и Xray в `/usr/local/x-ui/`
 
@@ -243,7 +243,7 @@ bash restore.sh <IP> backups/backup_*.tar.gz -i ~/.ssh/id_rsa
 - конфигурации Caddy (`/etc/caddy/Caddyfile`)
 - веб-контент (`/var/www/html`)
 - данные ACME Caddy (`/var/lib/caddy`)
-- файл доступов `/root/3xui-credentials.txt`
+- файл доступов `/root/setup-result.env`
 
 ### Серверный бэкап и восстановление внутри окружения
 
@@ -319,7 +319,7 @@ sudo bash uninstall.sh --remove-repo --remove-backups
 Если установка завершилась с ошибкой, проверьте:
 
 ```bash
-cat /root/3xui-install-full.log
+cat /root/install.log
 journalctl -u x-ui -n 100 --no-pager
 systemctl status x-ui
 systemctl status caddy
