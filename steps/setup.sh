@@ -53,6 +53,38 @@ fi
 _run_step "Selfsteal"   "$SCRIPT_DIR/selfsteal.sh"
 _run_step "3x-ui"       "$SCRIPT_DIR/xui.sh"
 
+# ─── Read inbound IDs and ports from DB ──────────────────────────────────────
+VLESS_INBOUND_ID=""
+VLESS_INBOUND_PORT=""
+HYSTERIA_INBOUND_ID=""
+HYSTERIA_INBOUND_PORT=""
+TROJAN_INBOUND_ID=""
+TROJAN_INBOUND_PORT=""
+
+if [[ -f "$XUI_DB" ]] && command_exists sqlite3; then
+    while IFS='|' read -r _id _port _protocol; do
+        case "$_protocol" in
+            vless)
+                VLESS_INBOUND_ID="$_id"
+                VLESS_INBOUND_PORT="$_port"
+                ;;
+            hysteria)
+                HYSTERIA_INBOUND_ID="$_id"
+                HYSTERIA_INBOUND_PORT="$_port"
+                ;;
+            trojan)
+                TROJAN_INBOUND_ID="$_id"
+                TROJAN_INBOUND_PORT="$_port"
+                ;;
+        esac
+    done < <(sqlite3 "$XUI_DB" "SELECT id, port, protocol FROM inbounds;" 2>/dev/null || true)
+fi
+
+# Fallback to configured ports if not fetched from DB
+[[ -z "$VLESS_INBOUND_PORT" ]] && VLESS_INBOUND_PORT="$VLESS_PORT"
+[[ -z "$HYSTERIA_INBOUND_PORT" ]] && HYSTERIA_INBOUND_PORT="$HY2_PORT"
+[[ -z "$TROJAN_INBOUND_PORT" ]] && TROJAN_INBOUND_PORT="$TROJAN_PORT"
+
 # ─── Save credentials ────────────────────────────────────────────────────────
 _cert_path=$(caddy_cert_file)
 cat > /root/setup-result.env <<CREDS
@@ -65,6 +97,12 @@ Certificate="${_cert_path:-<Caddy directory: ${CADDY_DATA_DIR}>}"
 WARP_SOCKS5="127.0.0.1:${WARP_PROXY_PORT}"
 Opera_SOCKS5="127.0.0.1:${OPERA_PROXY_PORT} (region: ${OPERA_REGION})"
 Tor_SOCKS5="127.0.0.1:${TOR_PORT}"
+HYSTERIA_INBOUND_ID="${HYSTERIA_INBOUND_ID}"
+HYSTERIA_INBOUND_PORT="${HYSTERIA_INBOUND_PORT}"
+VLESS_INBOUND_ID="${VLESS_INBOUND_ID}"
+VLESS_INBOUND_PORT="${VLESS_INBOUND_PORT}"
+TROJAN_INBOUND_ID="${TROJAN_INBOUND_ID}"
+TROJAN_INBOUND_PORT="${TROJAN_INBOUND_PORT}"
 CREDS
 chmod 600 /root/setup-result.env
 
