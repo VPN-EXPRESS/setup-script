@@ -155,7 +155,7 @@ XRAY_CONFIG=$(cat <<__JSON__
     "domainStrategy": "IPIfNonMatch",
     "rules": [
       {"type": "field", "inboundTag": ["api"], "outboundTag": "api"},
-      {"type": "field", "outboundTag": "blocked", "domain": ["geosite:category-ads-all", "ext:geosite_IR.dat:malware", "ext:geosite_IR.dat:phishing", "ext:geosite_IR.dat:cryptominers"]},
+    {"type": "field", "outboundTag": "blocked", "domain": ["geosite:category-ads-all", "domain:ads.youtube.com", "domain:googleads.g.doubleclick.net", "domain:googleadservices.com", "domain:pagead2.googlesyndication.com", "domain:adservice.google.com", "domain:static.doubleclick.net", "ext:geosite_IR.dat:malware", "ext:geosite_IR.dat:phishing", "ext:geosite_IR.dat:cryptominers"]},
       {"type": "field", "outboundTag": "warp", "domain": ["ext:geosite_RU.dat:ru-available-only-inside", "regexp:.*\\\\.ru\$", "regexp:.*\\\\.su\$", "regexp:.*\\\\.xn--p1ai\$", "domain:ntc.party"]},
       {"type": "field", "ip": ["ext:geoip_RU.dat:ru"], "outboundTag": "warp"},
       {"type": "field", "outboundTag": "tor", "domain": ["regexp:.*\\\\.onion\$", "domain:check.torproject.org"]},
