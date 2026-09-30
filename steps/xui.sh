@@ -243,7 +243,7 @@ sqlite3 "$XUI_DB" \
 
 sqlite3 "$XUI_DB" \
     "INSERT INTO inbounds (user_id,up,down,total,remark,enable,expiry_time,traffic_reset,listen,port,protocol,settings,stream_settings,tag,sniffing)
-     VALUES (1,0,0,0,'VLESS Reality',1,0,'${TRAFFIC_RESET}','',${VLESS_PORT},'vless','${VLESS_REALITY_SE_SQL}','${VLESS_REALITY_SS_SQL}','in-${VLESS_PORT}-tcp','${VLESS_REALITY_SN_SQL}');" \
+    VALUES (1,0,0,0,'🇩🇪 VLESS',1,0,'${TRAFFIC_RESET}','',${VLESS_PORT},'vless','${VLESS_REALITY_SE_SQL}','${VLESS_REALITY_SS_SQL}','in-${VLESS_PORT}-tcp','${VLESS_REALITY_SN_SQL}');" \
     || die "Failed to insert the VLESS Reality inbound into the database."
 
 # ── Hysteria2 ─────────────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ HYSTERIA2_SN_SQL="${HYSTERIA2_SNIFFING//\'/\'\'}"
 
 sqlite3 "$XUI_DB" \
     "INSERT INTO inbounds (user_id,up,down,total,remark,enable,expiry_time,traffic_reset,listen,port,protocol,settings,stream_settings,tag,sniffing)
-     VALUES (1,0,0,0,'Hy2',1,0,'${TRAFFIC_RESET}','',${HY2_PORT},'hysteria','${HYSTERIA2_SE_SQL}','${HYSTERIA2_SS_SQL}','in-${HY2_PORT}-udp','${HYSTERIA2_SN_SQL}');" \
+    VALUES (1,0,0,0,'🇩🇪 Hysteria2',1,0,'${TRAFFIC_RESET}','',${HY2_PORT},'hysteria','${HYSTERIA2_SE_SQL}','${HYSTERIA2_SS_SQL}','in-${HY2_PORT}-udp','${HYSTERIA2_SN_SQL}');" \
     || die "Failed to insert the Hysteria2 inbound into the database."
 
 # ── Trojan-WS за 443 (через Caddy) ─────────────────────────────────────────────
@@ -292,7 +292,7 @@ TROJAN_SN_SQL="${TROJAN_SNIFFING//\'/\'\'}"
 
 sqlite3 "$XUI_DB" \
     "INSERT INTO inbounds (user_id,up,down,total,remark,enable,expiry_time,traffic_reset,listen,port,protocol,settings,stream_settings,tag,sniffing)
-     VALUES (1,0,0,0,'Trojan WS',1,0,'${TRAFFIC_RESET}','127.0.0.1',${TROJAN_PORT},'trojan','${TROJAN_SE_SQL}','${TROJAN_SS_SQL}','in-${TROJAN_PORT}-tcp','${TROJAN_SN_SQL}');" \
+    VALUES (1,0,0,0,'🇩🇪 Trojan',1,0,'${TRAFFIC_RESET}','127.0.0.1',${TROJAN_PORT},'trojan','${TROJAN_SE_SQL}','${TROJAN_SS_SQL}','in-${TROJAN_PORT}-tcp','${TROJAN_SN_SQL}');" \
     || die "Failed to insert the Trojan-WS inbound into the database."
 
 # ── Хэш пароля (до старта сервиса) ──────────────────────────────────────────
