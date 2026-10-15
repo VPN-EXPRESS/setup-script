@@ -37,38 +37,48 @@ ensure_dns "Проверка DNS домена" "$DOMAIN"
 # IP этого сервера. На VPS за NAT `ip route ... src` даёт приватный адрес, поэтому
 # обязательно добавляем публичный IP с внешних echo-сервисов (именно его видит ACME).
 # Собираем ВСЕ кандидаты — без них проверку «домен указывает сюда» делать нельзя.
+# Включаем как IPv4, так и IPv6 адреса.
 _server_ips=$(
     {
         printf '%s\n' "${SERVER_IP:-}"
         ip -4 route get 1.1.1.1 2>/dev/null \
             | awk '{ for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }'
+        ip -6 route get 2606:4700:4700::1111 2>/dev/null \
+            | awk '{ for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }'
         curl -fsSL -4 --connect-timeout 5 --max-time 8 ifconfig.io   2>/dev/null \
             || curl -fsSL -4 --connect-timeout 5 --max-time 8 icanhazip.com 2>/dev/null \
             || curl -fsSL -4 --connect-timeout 5 --max-time 8 api.ipify.org 2>/dev/null \
             || true
+        curl -fsSL -6 --connect-timeout 5 --max-time 8 ifconfig.io   2>/dev/null \
+            || curl -fsSL -6 --connect-timeout 5 --max-time 8 icanhazip.com 2>/dev/null \
+            || true
         echo
-    } | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -u
+    } | grep -E '^[0-9]+(\.[0-9]+){3}$|:' | sort -u
 )
 
-# Сбрасываем локальный кэш, иначе после смены A-записи резолвер отдаёт старый IP.
+# Сбрасываем локальный кэш, иначе после смены A/AAAA-записи резолвер отдаёт старый IP.
 dns_flush_cache
 _dns_a_records=$(dig +short A "$DOMAIN" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' || true)
+_dns_aaaa_records=$(dig +short AAAA "$DOMAIN" 2>/dev/null | grep -E ':' || true)
 _dns_ahosts_raw=$(getent ahosts "$DOMAIN" 2>/dev/null || true)
 _dns_ahosts=$(printf '%s\n' "$_dns_ahosts_raw" \
     | awk '$1 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ {print $1}' \
     | sort -u || true)
+_dns_aaaahosts=$(printf '%s\n' "$_dns_ahosts_raw" \
+    | awk '$1 ~ /:/ {print $1}' \
+    | sort -u || true)
 # Публичные резолверы (1.1.1.1/8.8.8.8 + DoH) — это то, что увидит ACME снаружи.
 # Локальный резолв (dig/getent) — вспомогательный, его используем только если публичный пуст.
-_dns_public=$(dns_resolve_ipv4s_public "$DOMAIN")
-_dns_local=$(printf '%s\n%s\n' "$_dns_a_records" "$_dns_ahosts" \
-    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -u || true)
+_dns_public=$(dns_resolve_addresses_public "$DOMAIN")
+_dns_local=$(printf '%s\n%s\n%s\n%s\n' "$_dns_a_records" "$_dns_aaaa_records" "$_dns_ahosts" "$_dns_aaaahosts" \
+    | grep -E '^[0-9]+(\.[0-9]+){3}$|:' | sort -u || true)
 # Авторитетный для проверки набор — публичный (как видит ACME); локальный лишь как fallback.
-_dns_authoritative=$(printf '%s\n' "${_dns_public:-$_dns_local}" | grep -E '^[0-9.]+$' | sort -u || true)
+_dns_authoritative=$(printf '%s\n' "${_dns_public:-$_dns_local}" | grep -E '^[0-9]+(\.[0-9]+){3}$|:' | sort -u || true)
 _dns_ip=$(printf '%s\n' "$_dns_authoritative" | head -1)
 
 if [[ -z "$_dns_authoritative" ]]; then
     dns_diagnostics "Проверка DNS домена" "$DOMAIN" "$(printf '%s ' $_server_ips)" "$_dns_ip"
-    die "DNS resolution failed for $DOMAIN: neither public nor local resolvers returned an IPv4 address."
+    die "DNS resolution failed for $DOMAIN: neither public nor local resolvers returned an IP address."
 fi
 
 if [[ -z "$_server_ips" ]]; then

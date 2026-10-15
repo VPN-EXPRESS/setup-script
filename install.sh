@@ -58,11 +58,16 @@ done
 PANEL_USER="${PANEL_USER:-admin}"
 PANEL_PASS="${PANEL_PASS:-admin}"
 [[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || die_cli "Invalid domain: $DOMAIN"
-[[ "$SERVER_IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || die_cli "Invalid IPv4 address: $SERVER_IP"
-IFS=. read -r ip_octet_1 ip_octet_2 ip_octet_3 ip_octet_4 <<<"$SERVER_IP"
-for ip_octet in "$ip_octet_1" "$ip_octet_2" "$ip_octet_3" "$ip_octet_4"; do
-    (( ip_octet <= 255 )) || die_cli "Invalid IPv4 address: $SERVER_IP"
-done
+if [[ "$SERVER_IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+    IFS=. read -r ip_octet_1 ip_octet_2 ip_octet_3 ip_octet_4 <<<"$SERVER_IP"
+    for ip_octet in "$ip_octet_1" "$ip_octet_2" "$ip_octet_3" "$ip_octet_4"; do
+        (( ip_octet <= 255 )) || die_cli "Invalid IPv4 address: $SERVER_IP"
+    done
+elif [[ "$SERVER_IP" =~ ^[0-9a-fA-F:]+$ ]] && ip -6 addr show 2>/dev/null | grep -q "$SERVER_IP"; then
+    : # Valid IPv6 address
+else
+    die_cli "Invalid IP address (not IPv4 or IPv6): $SERVER_IP"
+fi
 [[ "$ACME_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || die_cli "Invalid email: $ACME_EMAIL"
 export DOMAIN SERVER_IP ACME_EMAIL PANEL_USER PANEL_PASS QUIET VERBOSE
 

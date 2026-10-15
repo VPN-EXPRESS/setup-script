@@ -71,6 +71,20 @@ dns_resolve_ipv4s() {
         | sort -u || true
 }
 
+dns_resolve_ipv6s() {
+    local host="$1"
+    getent ahosts "$host" 2>/dev/null \
+        | awk '{print $1}' \
+        | grep -E ':' \
+        | sort -u || true
+}
+
+dns_resolve_addresses() {
+    local host="$1"
+    dns_resolve_ipv4s "$host"
+    dns_resolve_ipv6s "$host"
+}
+
 doh_resolve_ipv4s() {
     local host="$1" json
 
@@ -87,6 +101,30 @@ doh_resolve_ipv4s() {
         | grep -oE '"data":"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"' \
         | sed -E 's/^"data":"//; s/"$//' \
         | sort -u || true
+}
+
+doh_resolve_ipv6s() {
+    local host="$1" json
+
+    if command_exists curl; then
+        json=$(curl -fsSL --retry 2 --connect-timeout 5 --max-time 15 \
+            --resolve cloudflare-dns.com:443:1.1.1.1 \
+            -H 'accept: application/dns-json' \
+            "https://cloudflare-dns.com/dns-query?name=${host}&type=AAAA" 2>/dev/null || true)
+    else
+        json=""
+    fi
+
+    printf '%s\n' "$json" \
+        | grep -oE '"data":"[0-9a-fA-F:]+"' \
+        | sed -E 's/^"data":"//; s/"$//' \
+        | sort -u || true
+}
+
+doh_resolve_addresses() {
+    local host="$1"
+    doh_resolve_ipv4s "$host"
+    doh_resolve_ipv6s "$host"
 }
 
 # Удаляет все строки /etc/hosts вида "<ip> <host>" для указанного хоста (с любым IP).
@@ -145,6 +183,26 @@ dns_resolve_ipv4s_public() {
         | sort -u || true
 }
 
+dns_resolve_ipv6s_public() {
+    local host="$1" out="" r
+    if command_exists dig; then
+        for r in 1.1.1.1 8.8.8.8; do
+            out+="$(dig +short AAAA "$host" "@${r}" +time=3 +tries=1 2>/dev/null \
+                | grep -E ':' || true)"$'\n'
+        done
+    fi
+    out+="$(doh_resolve_ipv6s "$host" || true)"$'\n'
+    printf '%s\n' "$out" \
+        | grep -E ':' \
+        | sort -u || true
+}
+
+dns_resolve_addresses_public() {
+    local host="$1"
+    dns_resolve_ipv4s_public "$host"
+    dns_resolve_ipv6s_public "$host"
+}
+
 port_is_listening() {
     local port="$1"
     ss -H -lntp 2>/dev/null | awk -v port=":${port}" '$4 ~ port { found=1 } END { exit(found ? 0 : 1) }'
@@ -177,6 +235,19 @@ dns_internet_check() {
         host="${target%:*}"
         port="${target#*:}"
         if timeout 4 bash -c ":</dev/tcp/${host}/${port}" &>/dev/null; then
+            printf '%s' "$target"
+            return 0
+        fi
+    done
+    for target in \
+        "[2606:4700:4700::1111]:443" \
+        "[2606:4700:4700::1001]:443"
+    do
+        host="${target%:*}"
+        host="${host#[}"
+        host="${host%]}"
+        port="${target#*:}"
+        if timeout 4 bash -c ":</dev/tcp/[${host}]/${port}" &>/dev/null; then
             printf '%s' "$target"
             return 0
         fi
@@ -234,7 +305,7 @@ ensure_dns() {
         die "${context}: no IP-level internet connectivity is available. Check routing, firewall, and NAT first."
     fi
 
-    resolved=$(dns_resolve_ipv4s "$domain")
+    resolved=$(dns_resolve_addresses "$domain")
     if [[ -n "$resolved" ]]; then
         return 0
     fi
@@ -242,17 +313,17 @@ ensure_dns() {
     info "${context}: internet is reachable via IP (${internet_target}), but DNS does not resolve ${domain}. Restoring /etc/resolv.conf..."
     dns_restore_resolv_conf
 
-    resolved=$(dns_resolve_ipv4s "$domain")
+    resolved=$(dns_resolve_addresses "$domain")
     if [[ -n "$resolved" ]]; then
         success "${context}: DNS restored for ${domain} (${resolved})."
         return 0
     fi
 
     info "${context}: attempting DoH fallback for ${domain}..."
-    resolved=$(doh_resolve_ipv4s "$domain")
+    resolved=$(doh_resolve_addresses "$domain")
     if [[ -n "$resolved" ]]; then
         dns_update_hosts_entry "$domain" "$(printf '%s\n' "$resolved" | head -1)" || true
-        resolved=$(dns_resolve_ipv4s "$domain")
+        resolved=$(dns_resolve_addresses "$domain")
         if [[ -n "$resolved" ]]; then
             success "${context}: DNS restored through DoH for ${domain} (${resolved})."
             return 0
