@@ -63,8 +63,8 @@ if [[ "$SERVER_IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
     for ip_octet in "$ip_octet_1" "$ip_octet_2" "$ip_octet_3" "$ip_octet_4"; do
         (( ip_octet <= 255 )) || die_cli "Invalid IPv4 address: $SERVER_IP"
     done
-elif [[ "$SERVER_IP" =~ ^[0-9a-fA-F:]+$ ]] && ip -6 addr show 2>/dev/null | grep -q "$SERVER_IP"; then
-    : # Valid IPv6 address
+elif [[ "$SERVER_IP" =~ ^[0-9a-fA-F:]+$ ]]; then
+    : # Valid IPv6 address (format check only; routed addresses may not appear in ip addr)
 else
     die_cli "Invalid IP address (not IPv4 or IPv6): $SERVER_IP"
 fi
