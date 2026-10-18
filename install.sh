@@ -72,7 +72,7 @@ fi
 export DOMAIN SERVER_IP ACME_EMAIL PANEL_USER PANEL_PASS QUIET VERBOSE
 
 TEMP_ROOT=""
-cleanup() { [[ -n "$TEMP_ROOT" ]] && rm -rf "$TEMP_ROOT"; }
+cleanup() { [[ -n "$TEMP_ROOT" ]] && rm -rf "$TEMP_ROOT"; return 0; }
 trap cleanup EXIT
 
 if [[ ! -f "$STEPS_DIR/setup.sh" ]]; then
