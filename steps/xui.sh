@@ -31,9 +31,15 @@ systemctl stop x-ui 2>/dev/null || true
 xui_tmp=$(mktemp -d)
 trap 'rm -rf "$xui_tmp"' EXIT
 
+_proxy_opts=""
+if command_exists curl; then
+    _proxy_opts="$(_warp_proxy_opts)"
+fi
+
 _dl_retries=3
 for _dl_attempt in $(seq 1 "$_dl_retries"); do
     curl -fL --retry 3 --retry-all-errors --connect-timeout 15 --max-time 300 \
+        $_proxy_opts \
         "$XUI_URL" -o "${xui_tmp}/${XUI_TARBALL}" && break
     if [[ "$_dl_attempt" -eq "$_dl_retries" ]]; then
         die "Failed to download ${XUI_TARBALL} after ${_dl_retries} attempts (${XUI_URL})."

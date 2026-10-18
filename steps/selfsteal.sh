@@ -150,7 +150,13 @@ install_caddy_native
 ensure_dns "Downloading selfsteal template" "api.github.com"
 ensure_dns "Downloading selfsteal template" "raw.githubusercontent.com"
 
+_proxy_opts=""
+if command_exists curl; then
+    _proxy_opts="$(_warp_proxy_opts)"
+fi
+
 _tree_json=$(curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 60 \
+    $_proxy_opts \
     "https://api.github.com/repos/${TEMPLATES_REPO}/git/trees/${TEMPLATES_BRANCH}?recursive=1") \
     || die "Failed to retrieve the selfsteal template list."
 
@@ -199,6 +205,7 @@ for _f in "${_files[@]}"; do
     _dest="${WEBROOT}/${_rel}"
     mkdir -p "$(dirname "$_dest")"
     curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 \
+        $_proxy_opts \
         "https://raw.githubusercontent.com/${TEMPLATES_REPO}/${TEMPLATES_BRANCH}/${_f}" \
         -o "$_dest" \
         || die "Failed to download template file: ${_f}"

@@ -48,6 +48,31 @@ command_exists() {
     command -v "$1" &>/dev/null
 }
 
+# Returns WARP SOCKS5 proxy curl options if the proxy is actually forwarding
+# traffic to the internet. Caches the result for the lifetime of the shell so
+# repeated calls within a single install.sh run do not re-test the proxy.
+_warp_proxy_opts() {
+    if [[ -n "${_WARP_PROXY_OPTS_CACHED:-}" ]]; then
+        printf '%s' "$_WARP_PROXY_OPTS_CACHED"
+        return 0
+    fi
+
+    local _opts=""
+    if command_exists curl; then
+        if curl --proxy socks5h://127.0.0.1:"${WARP_PROXY_PORT:-40000}" \
+                --connect-timeout 3 --max-time 6 \
+                -s -o /dev/null https://1.1.1.1/ 2>/dev/null; then
+            _opts="--proxy socks5h://127.0.0.1:${WARP_PROXY_PORT:-40000}"
+            info "Using WARP SOCKS5 proxy (127.0.0.1:${WARP_PROXY_PORT:-40000}) for GitHub downloads."
+        else
+            warn "WARP SOCKS5 proxy on 127.0.0.1:${WARP_PROXY_PORT:-40000} is not forwarding traffic; GitHub downloads will go direct."
+        fi
+    fi
+
+    export _WARP_PROXY_OPTS_CACHED="$_opts"
+    printf '%s' "$_opts"
+}
+
 get_linux_id() {
     if [[ -r /etc/os-release ]]; then
         . /etc/os-release

@@ -18,6 +18,11 @@ ensure_dns "Installing opera-proxy" "github.com"
 ensure_dns "Installing opera-proxy" "release-assets.githubusercontent.com"
 ensure_dns "Installing opera-proxy" "api.github.com"
 
+_proxy_opts=""
+if command_exists curl; then
+    _proxy_opts="$(_warp_proxy_opts)"
+fi
+
 _latest_url="https://github.com/Alexey71/opera-proxy/releases/latest/download/opera-proxy.${_arch_str}"
 _latest_tag="latest"
 info "Downloading the latest release directly: ${_latest_url}"
@@ -32,11 +37,11 @@ else
 
     mkdir -p "$(dirname "$OPERA_BIN")"
     info "Downloading $_latest_url..."
-    curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 \
+    curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 $_proxy_opts \
         -o "${OPERA_BIN}.tmp" "$_latest_url" \
         || {
             warn "Direct download failed; trying the GitHub API..."
-            _api_resp=$(curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+            _api_resp=$(curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 $_proxy_opts \
                 -H "Accept: application/vnd.github+json" \
                 "https://api.github.com/repos/Alexey71/opera-proxy/releases/latest" 2>/dev/null) || true
             _latest_url=$(echo "$_api_resp" \
@@ -46,8 +51,11 @@ else
                 | grep -o '"tag_name": *"[^"]*"' \
                 | grep -o '"[^"]*"$' \
                 | tr -d '"' || true)
-            [[ -n "$_latest_url" ]] || die "Unable to download opera-proxy: neither direct download nor the GitHub API is available."
-            curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 \
+            if [[ -z "$_latest_url" ]]; then
+                warn "Unable to download opera-proxy: neither direct download nor the GitHub API is available. Skipping opera-proxy."
+                exit 0
+            fi
+            curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 $_proxy_opts \
                 -o "${OPERA_BIN}.tmp" "$_latest_url" \
                 || die "Failed to download opera-proxy."
         }
