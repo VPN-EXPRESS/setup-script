@@ -240,16 +240,22 @@ dns_internet_check() {
         fi
     done
     for target in \
-        "[2606:4700:4700::1111]:443" \
-        "[2606:4700:4700::1001]:443"
+        "2606:4700:4700::1111:443" \
+        "2606:4700:4700::1001:443"
     do
         host="${target%:*}"
-        host="${host#[}"
-        host="${host%]}"
-        port="${target#*:}"
-        if timeout 4 bash -c ":</dev/tcp/[${host}]/${port}" &>/dev/null; then
-            printf '%s' "$target"
-            return 0
+        port="${target##*:}"
+        if command_exists curl; then
+            if timeout 4 curl -6 -sI "http://[${host}]:${port}/" &>/dev/null; then
+                printf '%s' "$target"
+                return 0
+            fi
+        fi
+        if command_exists ping6; then
+            if timeout 4 ping6 -c 1 -W 3 "$host" &>/dev/null; then
+                printf '%s' "$target"
+                return 0
+            fi
         fi
     done
     return 1
