@@ -111,10 +111,12 @@ dns_resolve_addresses() {
 }
 
 doh_resolve_ipv4s() {
-    local host="$1" json
+    local host="$1" json _proxy
 
     if command_exists curl; then
+        _proxy="$(_warp_proxy_opts 2>/dev/null || true)"
         json=$(curl -fsSL --retry 2 --connect-timeout 5 --max-time 15 \
+            $_proxy \
             --resolve cloudflare-dns.com:443:1.1.1.1 \
             -H 'accept: application/dns-json' \
             "https://cloudflare-dns.com/dns-query?name=${host}&type=A" 2>/dev/null || true)
@@ -129,10 +131,12 @@ doh_resolve_ipv4s() {
 }
 
 doh_resolve_ipv6s() {
-    local host="$1" json
+    local host="$1" json _proxy
 
     if command_exists curl; then
+        _proxy="$(_warp_proxy_opts 2>/dev/null || true)"
         json=$(curl -fsSL --retry 2 --connect-timeout 5 --max-time 15 \
+            $_proxy \
             --resolve cloudflare-dns.com:443:1.1.1.1 \
             -H 'accept: application/dns-json' \
             "https://cloudflare-dns.com/dns-query?name=${host}&type=AAAA" 2>/dev/null || true)
@@ -296,14 +300,40 @@ dns_restore_resolv_conf() {
         systemctl stop systemd-resolved 2>/dev/null || true
     fi
 
+    # Detect LXD bridge DNS server (IPv6 link-local or ULA gateway).
+    # In IPv6-only LXC containers, public resolvers (1.1.1.1/8.8.8.8) are
+    # often unreachable, but the LXD bridge dnsmasq forwards queries through
+    # the host's upstream DNS and works reliably.
+    local _bridge_dns=""
+    _bridge_dns=$(ip -6 route show default 2>/dev/null \
+        | awk '{for(i=1;i<=NF;i++) if($i=="via"){print $(i+1); exit}}' \
+        | head -1)
+    if [[ -z "$_bridge_dns" ]]; then
+        _bridge_dns=$(ip -6 addr show 2>/dev/null \
+            | awk '/inet6 fd00:|inet6 fd[0-9a-f]+:/{print $2; exit}' \
+            | sed 's#/.*##' \
+            | head -1)
+    fi
+
     rm -f /etc/resolv.conf
-    cat > /etc/resolv.conf <<'EOF'
+    if [[ -n "$_bridge_dns" ]]; then
+        cat > /etc/resolv.conf <<EOF
+# Restored by 3x-ui installer after DNS failure
+# LXD bridge DNS detected: ${_bridge_dns}
+nameserver ${_bridge_dns}
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+options timeout:2 attempts:2 rotate
+EOF
+    else
+        cat > /etc/resolv.conf <<'EOF'
 # Restored by 3x-ui installer after DNS failure
 nameserver 1.1.1.1
 nameserver 8.8.8.8
 nameserver 9.9.9.9
 options timeout:2 attempts:2 rotate
 EOF
+    fi
     chmod 644 /etc/resolv.conf 2>/dev/null || true
 }
 
