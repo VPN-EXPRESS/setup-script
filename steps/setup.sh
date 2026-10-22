@@ -85,6 +85,13 @@ fi
 [[ -z "$HYSTERIA_INBOUND_PORT" ]] && HYSTERIA_INBOUND_PORT="$HY2_PORT"
 [[ -z "$TROJAN_INBOUND_PORT" ]] && TROJAN_INBOUND_PORT="$TROJAN_PORT"
 
+for _protocol in VLESS HYSTERIA TROJAN; do
+    _id_var="${_protocol}_INBOUND_ID"
+    _port_var="${_protocol}_INBOUND_PORT"
+    [[ -n "${!_id_var}" && -n "${!_port_var}" ]] \
+        || die "Failed to read ${_protocol} inbound ID and port from the 3x-ui database."
+done
+
 # ─── Save credentials ────────────────────────────────────────────────────────
 _cert_path=$(caddy_cert_file)
 cat > /root/setup-result.env <<CREDS
