@@ -182,7 +182,7 @@ GeoIP/GeoSite для подписок и маршрутизации исполь
 | `PANEL_PATH`       | случайный      | Путь к панели                              |
 | `SUB_PORT`         | `60001`               | Локальный порт подписок          |
 | `SUB_PATH`         | `/subs/`              | Путь к подписке 3x-ui                    |
-| `SUB_TITLE`        | domain                  | Название подписки 3x-ui               |
+| `SUB_TITLE`        | `MIN VPN`               | Название подписки 3x-ui               |
 | `VLESS_PORT`       | `443`                 | Порт VLESS Reality                                |
 | `TROJAN_PORT`      | `8443`                | Локальный адрес Trojan-WS               |
 | `TROJAN_WS_PATH`   | случайный      | WS-путь для Caddy                              |

@@ -633,6 +633,4 @@ if [[ -z "${DOMAIN:-}" ]]; then
     [[ -z "$DOMAIN" ]] && die "Domain cannot be empty."
 fi
 export DOMAIN
-
-# По умолчанию название подписки делаем доменом, если оно не задано явно.
-export SUB_TITLE="${SUB_TITLE:-${DOMAIN}}"
+export SUB_TITLE="${SUB_TITLE:-MIN VPN}"
