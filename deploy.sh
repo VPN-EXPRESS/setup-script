@@ -96,6 +96,10 @@ info "Copying files to ${REMOTE_DIR}/..."
 remote_dir_q=$(shell_quote "$REMOTE_DIR")
 ssh "${SSH_OPTS[@]}" "${SSH_USER}@${SERVER_IP}" "mkdir -p ${remote_dir_q}"
 scp "${SCP_OPTS[@]}" "$STEPS_DIR"/*.sh "${SSH_USER}@${SERVER_IP}:${remote_dir_q}/"
+# Шаблон страницы подписки 3x-ui (steps/templates/sub/index.html) ставится шагом xui.sh
+if [[ -d "$STEPS_DIR/templates" ]]; then
+    scp -r "${SCP_OPTS[@]}" "$STEPS_DIR/templates" "${SSH_USER}@${SERVER_IP}:${remote_dir_q}/"
+fi
 success "Files copied successfully."
 
 # ─── Running setup ───────────────────────────────────────────────────────────────────

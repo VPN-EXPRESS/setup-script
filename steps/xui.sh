@@ -229,6 +229,28 @@ xui_db_set webKeyFile         "$CADDY_KEY_FILE"
 xui_db_set subCertFile        "$CADDY_CERT_FILE"
 xui_db_set subKeyFile         "$CADDY_KEY_FILE"
 
+# ── Кастомная страница подписки (Sub Theme Directory) ────────────────────────
+# 3x-ui рендерит HTML-страницу подписки из <subThemeDir>/sub.html или index.html
+# (Go html/template; переменные {{ .sId }}, {{ .links }} и т.д.). Файл читается при
+# каждом запросе (кеш по mtime), поэтому рестарт x-ui для замены шаблона не нужен.
+# Кладём в /etc/x-ui: каталог попадает в бэкап и переживает переустановку бинарей.
+# Нет файла в репозитории или SUB_TEMPLATE=0 → subThemeDir пуст, остаётся встроенная страница.
+SUB_TEMPLATE_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)/templates/sub/index.html"
+SUB_TEMPLATE_DIR="${XUI_DB_DIR}/sub_templates/min-vpn"
+if ! truthy "${SUB_TEMPLATE:-1}"; then
+    xui_db_set subThemeDir ""
+    info "SUB_TEMPLATE disabled: the built-in 3x-ui subscription page is used."
+elif [[ -s "$SUB_TEMPLATE_SRC" ]]; then
+    mkdir -p "$SUB_TEMPLATE_DIR"
+    install -m 0644 "$SUB_TEMPLATE_SRC" "${SUB_TEMPLATE_DIR}/index.html"
+    chmod 755 "${XUI_DB_DIR}/sub_templates" "$SUB_TEMPLATE_DIR"
+    xui_db_set subThemeDir "$SUB_TEMPLATE_DIR"
+    info "Custom subscription page installed: ${SUB_TEMPLATE_DIR}/index.html"
+else
+    xui_db_set subThemeDir ""
+    warn "Subscription template not found (${SUB_TEMPLATE_SRC}); the built-in 3x-ui page is used."
+fi
+
 # ── VLESS Reality ────────────────────────────────────────────────────────────
 # В новой версии 3x-ui клиенты хранятся в отдельных таблицах clients/client_inbounds/client_traffics
 VLESS_REALITY_SETTINGS="{\"clients\":[],\"decryption\":\"none\",\"encryption\":\"none\",\"fallbacks\":[{\"dest\":9443,\"xver\":1}]}"
