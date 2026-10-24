@@ -232,6 +232,11 @@ xui_db_set subEnableRouting   "true"
 # INCY не мешает). Нужна версия 3x-ui с вкладкой INCY (≥ 3.4.1; изоляцию от заголовка HAPP — ≥ 3.10.2).
 xui_db_set subIncyRoutingRules  "$INCY_ROUTING"
 xui_db_set subIncyEnableRouting "true"
+# Шаблон ремарки ссылок в подписке. Дефолт 3x-ui — «{{INBOUND}}-{{EMAIL}}|📊…|⏳…D»: первая
+# ссылка подписки получает его целиком, поэтому к верхнему инбаунду через дефис дописывался
+# email клиента. Здесь тот же шаблон без {{EMAIL}}: имя инбаунда + остаток трафика/дней
+# (для безлимитных клиентов эти сегменты сами выпадают).
+xui_db_set remarkTemplate       '{{INBOUND}}|📊{{TRAFFIC_LEFT}}|⏳{{DAYS_LEFT}}D'
 xui_db_set xrayTemplateConfig "$XRAY_CONFIG_1L"
 # Сертификат Caddy для панели и подписки (HTTPS на localhost + кнопка в UI).
 xui_db_set webCertFile        "$CADDY_CERT_FILE"
