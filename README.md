@@ -163,6 +163,7 @@ GeoIP/GeoSite для подписок и маршрутизации исполь
 После успешного развёртывания вы получите:
 
 - Панель: `https://<DOMAIN>/<PANEL_PATH>/`
+- Подписка: `https://<DOMAIN><SUB_PATH><SUB_ID>` (по HTTP не выдаётся — только редирект на HTTPS)
 - Логин, пароль и параметры доступа в `/root/setup-result.env`
 - Логи установки в `/root/3xui-install.log`
 - Полный журнал в `/root/install.log`
@@ -181,7 +182,7 @@ GeoIP/GeoSite для подписок и маршрутизации исполь
 | `PANEL_PASS`       | случайный      | Пароль панели                             |
 | `PANEL_PATH`       | случайный      | Путь к панели                              |
 | `SUB_PORT`         | `60001`               | Локальный порт подписок          |
-| `SUB_PATH`         | `/subs/`              | Путь к подписке 3x-ui                    |
+| `SUB_PATH`         | `/subs/`              | Путь к подписке 3x-ui (отдаётся только по HTTPS)
 | `SUB_TITLE`        | `MIN VPN`               | Название подписки 3x-ui               |
 | `VLESS_PORT`       | `443`                 | Порт VLESS Reality                                |
 | `TROJAN_PORT`      | `8443`                | Локальный адрес Trojan-WS               |

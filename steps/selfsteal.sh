@@ -279,7 +279,9 @@ https://${DOMAIN} {
 			}
 		}
 	}
-	# Подписка → локальный HTTPS-бэкенд x-ui
+	# Подписка → локальный HTTPS-бэкенд x-ui.
+	# Только по HTTPS: `http://DOMAIN/subs/...` не отдаёт конфиг, а редиректит
+	# на https (блок http://${DOMAIN} выше) — так ссылка из бота всегда TLS.
 	@sub path ${SUB_PATH%/} ${SUB_PATH}*
 	handle @sub {
 		reverse_proxy https://127.0.0.1:${SUB_PORT} {
