@@ -7,6 +7,9 @@ info "Installing selfsteal (Caddy)..."
 SELFSTEAL_PORT="${SELFSTEAL_PORT:-9443}"
 CADDYFILE="/etc/caddy/Caddyfile"
 WEBROOT="/var/www/html"
+# Сколько ждать выпуска сертификата. LE обычно укладывается в секунды, но при фолбэке
+# на ZeroSSL выпуск занимает минуты (~3 мин и больше), поэтому запас с головой.
+CERT_WAIT_SECONDS="${CERT_WAIT_SECONDS:-300}"
 # CADDY_DATA_DIR (каталог ACME-данных Caddy) задан в _lib.sh.
 # Источник sni-шаблонов сайта-заглушки — ссылка на папку с шаблонами на GitHub.
 # Чтобы взять шаблоны из другого места, поменяйте этот URL на ссылку папки вида:
@@ -147,71 +150,50 @@ install_caddy_native() {
 install_caddy_native
 
 # ── Сайт-заглушка: случайный шаблон из sni-templates ─────────────────────────
-ensure_dns "Downloading selfsteal template" "api.github.com"
-ensure_dns "Downloading selfsteal template" "raw.githubusercontent.com"
+# Репозиторий шаблонов качаем одним архивом с codeload.github.com. REST API GitHub
+# (api.github.com) без токена ограничен 60 запросами в час на IP, а выходной IP WARP
+# общий с чужими клиентами — лимит выбирался, и API отвечал 403.
+ensure_dns "Downloading selfsteal template" "codeload.github.com"
 
 _proxy_opts=""
 if command_exists curl; then
     _proxy_opts="$(_warp_proxy_opts)"
 fi
 
-_tree_json=$(curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 60 \
+_tpl_tmp=$(mktemp -d) || die "Failed to create a temporary directory for selfsteal templates."
+trap 'rm -rf "$_tpl_tmp"' EXIT
+
+curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 180 \
     $_proxy_opts \
-    "https://api.github.com/repos/${TEMPLATES_REPO}/git/trees/${TEMPLATES_BRANCH}?recursive=1") \
-    || die "Failed to retrieve the selfsteal template list."
+    "https://codeload.github.com/${TEMPLATES_REPO}/tar.gz/${TEMPLATES_BRANCH}" \
+    -o "${_tpl_tmp}/templates.tar.gz" \
+    || die "Failed to download the selfsteal template archive (${TEMPLATES_REPO}@${TEMPLATES_BRANCH})."
 
-# Нормализуем путь к папке шаблонов: без ведущего/висячего слэша, затем один трейлинг-слэш.
+mkdir -p "${_tpl_tmp}/repo"
+tar -xzf "${_tpl_tmp}/templates.tar.gz" -C "${_tpl_tmp}/repo" --strip-components=1 \
+    || die "Failed to unpack the selfsteal template archive."
+
+# Нормализуем путь к папке шаблонов: без ведущего/висячего слэша.
 TEMPLATES_PATH="${TEMPLATES_PATH#/}"; TEMPLATES_PATH="${TEMPLATES_PATH%/}"
-_prefix="${TEMPLATES_PATH:+${TEMPLATES_PATH}/}"   # "sni-templates/" или "" для корня репо
+_tpl_root="${_tpl_tmp}/repo${TEMPLATES_PATH:+/${TEMPLATES_PATH}}"
+[[ -d "$_tpl_root" ]] || die "Template path ${TEMPLATES_PATH:-<root>} was not found in ${TEMPLATES_REPO}@${TEMPLATES_BRANCH}."
 
-# Достаём все пути из дерева (только значения "path") — дальше работаем строками bash.
-mapfile -t _all_paths < <(printf '%s' "$_tree_json" \
-    | grep -oE '"path": *"[^"]+"' \
-    | sed -E 's/^"path": *"//; s/"$//')
-[[ ${#_all_paths[@]} -gt 0 ]] || die "Failed to parse the template repository tree."
-
-# Имена шаблонов = директории первого уровня под $_prefix (файлы в корне пропускаем).
-declare -A _seen_tpl=()
-_templates=()
-for _p in "${_all_paths[@]}"; do
-    [[ -n "$_prefix" && "$_p" != "$_prefix"* ]] && continue
-    _rest="${_p#"$_prefix"}"
-    _top="${_rest%%/*}"
-    [[ "$_top" == "$_rest" || -z "$_top" ]] && continue   # нет вложенности → не папка-шаблон
-    if [[ -z "${_seen_tpl[$_top]:-}" ]]; then
-        _seen_tpl["$_top"]=1
-        _templates+=("$_top")
-    fi
-done
+# Имена шаблонов = директории первого уровня (файлы и скрытые каталоги пропускаем).
+mapfile -t _templates < <(find "$_tpl_root" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%f\n' | sort)
 [[ ${#_templates[@]} -gt 0 ]] || die "The selfsteal template list is empty (repository: ${TEMPLATES_REPO}, path: ${TEMPLATES_PATH:-<root>})."
 
 _choice="${_templates[RANDOM % ${#_templates[@]}]}"
 info "Selected selfsteal template: ${_choice} (${#_templates[@]} available)"
 
-# Файлы выбранного шаблона — только файлы (последний сегмент с расширением).
-_files=()
-for _p in "${_all_paths[@]}"; do
-    [[ "$_p" == "${_prefix}${_choice}/"* ]] || continue
-    _last="${_p##*/}"
-    [[ "$_last" == *.* ]] || continue
-    _files+=("$_p")
-done
-[[ ${#_files[@]} -gt 0 ]] || die "No files were found in template ${_choice}."
+_tpl_dir="${_tpl_root}/${_choice}"
+[[ -n "$(find "$_tpl_dir" -type f -print -quit)" ]] || die "No files were found in template ${_choice}."
 
 rm -rf "$WEBROOT"
 mkdir -p "$WEBROOT"
-for _f in "${_files[@]}"; do
-    _rel="${_f#"${_prefix}${_choice}/"}"
-    _dest="${WEBROOT}/${_rel}"
-    mkdir -p "$(dirname "$_dest")"
-    curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 120 \
-        $_proxy_opts \
-        "https://raw.githubusercontent.com/${TEMPLATES_REPO}/${TEMPLATES_BRANCH}/${_f}" \
-        -o "$_dest" \
-        || die "Failed to download template file: ${_f}"
-done
+cp -a "${_tpl_dir}/." "$WEBROOT/" || die "Failed to copy template ${_choice} to ${WEBROOT}."
+_files_count=$(find "$WEBROOT" -type f | wc -l)
 id caddy &>/dev/null && chown -R caddy:caddy "$WEBROOT" 2>/dev/null || true
-success "Selfsteal site deployed to ${WEBROOT} (${#_files[@]} files)."
+success "Selfsteal site deployed to ${WEBROOT} (${_files_count} files)."
 
 # Логи идут в stderr → journald (journalctl -u caddy). Файловые логи не используем,
 # чтобы избежать проблем с правами (caddy validate под root создаёт файл от root).
@@ -246,16 +228,18 @@ http://${DOMAIN} {
 }
 
 https://${DOMAIN} {
-	# Сертификат через ACME. Основной CA — ZeroSSL (мягче к валидации, отдельные лимиты),
-	# фолбэк — Let's Encrypt. EAB для ZeroSSL Caddy генерирует сам по email (ключ не нужен).
-	# Порядок issuer'ов = порядок попыток; чтобы сделать основным LE — поменяй блоки местами.
+	# Сертификат через ACME. Основной CA — Let's Encrypt (выдаёт за секунды), фолбэк —
+	# ZeroSSL: Caddy переходит на него, если LE вернул ошибку (например, лимит 50
+	# сертификатов в неделю на зарегистрированный домен). ZeroSSL выдаёт минутами.
+	# EAB для ZeroSSL Caddy генерирует сам по email (ключ не нужен).
+	# Порядок issuer'ов = порядок попыток.
 	tls {
 		issuer acme {
-			dir https://acme.zerossl.com/v2/DV90
+			dir https://acme-v02.api.letsencrypt.org/directory
             email ${ACME_EMAIL}
 		}
 		issuer acme {
-			dir https://acme-v02.api.letsencrypt.org/directory
+			dir https://acme.zerossl.com/v2/DV90
             email ${ACME_EMAIL}
 		}
 	}
@@ -280,7 +264,7 @@ https://${DOMAIN} {
 		}
 	}
 	# Подписка → локальный HTTPS-бэкенд x-ui.
-	# Только по HTTPS: `http://DOMAIN/subs/...` не отдаёт конфиг, а редиректит
+	# Только по HTTPS: «http://DOMAIN/subs/...» не отдаёт конфиг, а редиректит
 	# на https (блок http://${DOMAIN} выше) — так ссылка из бота всегда TLS.
 	@sub path ${SUB_PATH%/} ${SUB_PATH}*
 	handle @sub {
@@ -339,9 +323,9 @@ caddy_runtime_diagnostics() {
     ss -lntp 2>/dev/null | grep -E ":(80|${SELFSTEAL_PORT})\b" | sed 's/^/[DEBUG]   /' || true
 }
 
-info "Waiting for Caddy to issue the certificate (up to 180 seconds)..."
+info "Waiting for Caddy to issue the certificate (up to ${CERT_WAIT_SECONDS} seconds)..."
 CERT_SRC=""; KEY_SRC=""
-for i in $(seq 1 180); do
+for i in $(seq 1 "$CERT_WAIT_SECONDS"); do
     CERT_SRC=$(find "$CADDY_DATA_DIR" -path "*certificates*/${DOMAIN}/${DOMAIN}.crt" 2>/dev/null | head -1 || true)
     if [[ -n "$CERT_SRC" ]]; then
         KEY_SRC="${CERT_SRC%.crt}.key"
@@ -364,7 +348,7 @@ if [[ -z "$CERT_SRC" || ! -f "$KEY_SRC" ]]; then
         die "DNS for $DOMAIN is not resolving externally (DNS IP: $_dns_ip). Check the A record and DNS propagation."
     else
         caddy_runtime_diagnostics
-        die "Caddy did not obtain a certificate within 180 seconds. DNS: $DOMAIN -> $_dns_ip."
+        die "Caddy did not obtain a certificate within ${CERT_WAIT_SECONDS} seconds. DNS: $DOMAIN -> $_dns_ip."
     fi
 fi
 
