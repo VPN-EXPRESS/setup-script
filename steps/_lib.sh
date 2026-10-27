@@ -561,6 +561,9 @@ export ACME_EMAIL="${ACME_EMAIL:-admin@${DOMAIN}}"
 # TROJAN_PORT — это внутренний localhost-порт бэкенда.
 export TROJAN_PORT="${TROJAN_PORT:-8443}"
 export TRAFFIC_RESET="${TRAFFIC_RESET:-monthly}"
+# Domain-level ad and malware blocking in the generated Xray routing profile.
+# This cannot remove ads delivered from the same HTTPS host as the video.
+export XUI_BLOCK_ADS="${XUI_BLOCK_ADS:-true}"
 export LOGFILE="${XUI_DIR}/3xui-install.log"
 export XUI_VERSION="latest"
 export LOW_POWER_MODE="${LOW_POWER_MODE:-0}"

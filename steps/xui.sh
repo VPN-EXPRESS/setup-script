@@ -144,6 +144,11 @@ done
 SIDS_JSON="[${SIDS_JSON%, }]"
 
 # ── Xray config ──────────────────────────────────────────────────────────────
+XRAY_AD_BLOCK_RULE=""
+if truthy "${XUI_BLOCK_ADS:-true}"; then
+    XRAY_AD_BLOCK_RULE='      {"type": "field", "outboundTag": "blocked", "domain": ["geosite:category-ads-all", "domain:ads.youtube.com", "domain:doubleclick.net", "domain:googleads.g.doubleclick.net", "domain:googlesyndication.com", "domain:pagead2.googlesyndication.com", "domain:googleadservices.com", "domain:adservice.google.com", "domain:static.doubleclick.net", "ext:geosite_IR.dat:malware", "ext:geosite_IR.dat:phishing", "ext:geosite_IR.dat:cryptominers"]},'
+fi
+
 XRAY_CONFIG=$(cat <<__JSON__
 {
   "log": {"access": "./access.log", "dnsLog": false, "error": "", "loglevel": "${XUI_XRAY_LOG_LEVEL}"},
@@ -161,7 +166,7 @@ XRAY_CONFIG=$(cat <<__JSON__
     "domainStrategy": "IPIfNonMatch",
     "rules": [
       {"type": "field", "inboundTag": ["api"], "outboundTag": "api"},
-    {"type": "field", "outboundTag": "blocked", "domain": ["geosite:category-ads-all", "domain:ads.youtube.com", "domain:doubleclick.net", "domain:googlesyndication.com", "domain:googleadservices.com", "domain:adservice.google.com", "ext:geosite_IR.dat:malware", "ext:geosite_IR.dat:phishing", "ext:geosite_IR.dat:cryptominers"]},
+${XRAY_AD_BLOCK_RULE}
       {"type": "field", "outboundTag": "warp", "domain": ["ext:geosite_RU.dat:ru-available-only-inside", "regexp:.*\\\\.ru\$", "regexp:.*\\\\.su\$", "regexp:.*\\\\.xn--p1ai\$", "domain:ntc.party"]},
       {"type": "field", "ip": ["ext:geoip_RU.dat:ru"], "outboundTag": "warp"},
       {"type": "field", "outboundTag": "tor", "domain": ["regexp:.*\\\\.onion\$", "domain:check.torproject.org"]},

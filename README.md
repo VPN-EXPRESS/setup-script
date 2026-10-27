@@ -209,6 +209,7 @@ GeoIP/GeoSite для подписок и маршрутизации исполь
 | `SUB_PATH`         | `/subs/`              | Путь к подписке 3x-ui (отдаётся только по HTTPS)
 | `SUB_TITLE`        | `MIN VPN`               | Название подписки 3x-ui               |
 | `SUB_TEMPLATE`     | `1`                     | Ставить кастомную HTML-страницу подписки (`0` — встроенная страница 3x-ui) |
+| `XUI_BLOCK_ADS`           | `true`                  | Блокировать рекламные, трекинговые, malware/phishing-домены в Xray (`false` — отключить) |
 | `VLESS_PORT`       | `443`                 | Порт VLESS Reality                                |
 | `TROJAN_PORT`      | `8443`                | Локальный адрес Trojan-WS               |
 | `TROJAN_WS_PATH`   | случайный      | WS-путь для Caddy                              |
