@@ -28,6 +28,8 @@ Required arguments:
 Optional arguments:
     --username NAME       Panel username (default: admin)
     --password PASSWORD   Panel password (default: admin)
+    --sub-check-url URL   Backend endpoint that decides which device may fetch a
+                          subscription (Caddy forward_auth); empty = no device check
     -h, --help            Show this help
     -q, --quiet           Show only errors
     -v, --verbose         Enable detailed debug output
@@ -43,6 +45,7 @@ while [[ $# -gt 0 ]]; do
                 --email) [[ $# -ge 2 ]] || die_cli "Value required for --email."; ACME_EMAIL="$2"; shift 2 ;;
                 --username) [[ $# -ge 2 ]] || die_cli "Value required for --username."; PANEL_USER="$2"; shift 2 ;;
                 --password) [[ $# -ge 2 ]] || die_cli "Value required for --password."; PANEL_PASS="$2"; shift 2 ;;
+                --sub-check-url) [[ $# -ge 2 ]] || die_cli "Value required for --sub-check-url."; SUB_HWID_CHECK_URL="$2"; shift 2 ;;
                 -h|--help) usage; exit 0 ;;
                 -q|--quiet) QUIET=1; shift ;;
                 -v|--verbose) VERBOSE=1; shift ;;

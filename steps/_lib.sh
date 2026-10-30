@@ -583,6 +583,12 @@ export PANEL_USER="${PANEL_USER:-admin}"
 export SUB_PORT="${SUB_PORT:-60001}"
 export SUB_TITLE="${SUB_TITLE:-}"
 export SUB_PATH="${SUB_PATH:-/subs/}"
+# Backend endpoint that allows or refuses a subscription request by the device it
+# comes from (HWID). Empty = no device check, subscriptions go straight to x-ui.
+export SUB_HWID_CHECK_URL="${SUB_HWID_CHECK_URL:-}"
+if [[ -n "$SUB_HWID_CHECK_URL" && ! "$SUB_HWID_CHECK_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9._~/-]*)?$ ]]; then
+    die "SUB_HWID_CHECK_URL must be an https:// URL without a query string (for example https://api.example.com/api/v1/subs/check); current value: ${SUB_HWID_CHECK_URL}"
+fi
 
 if [[ -z "${PANEL_PASS:-}" ]]; then
     PANEL_PASS=$(random_alnum 18)

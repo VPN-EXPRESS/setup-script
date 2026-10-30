@@ -197,6 +197,22 @@ success "Selfsteal site deployed to ${WEBROOT} (${_files_count} files)."
 
 # Логи идут в stderr → journald (journalctl -u caddy). Файловые логи не используем,
 # чтобы избежать проблем с правами (caddy validate под root создаёт файл от root).
+# Проверка устройства: перед выдачей подписки Caddy спрашивает бэкенд (forward_auth),
+# с какого устройства пришёл запрос (HWID из заголовков VPN-клиента). 2xx → отдаём
+# подписку, иначе клиент получает ответ бэкенда (403). Если бэкенд недоступен, подписку
+# не отдадим (обновление конфигов не пройдёт, уже скачанные работают как раньше).
+SUB_AUTH_BLOCK=""
+if [[ -n "${SUB_HWID_CHECK_URL:-}" ]]; then
+    _chk_rest="${SUB_HWID_CHECK_URL#*://}"
+    _chk_upstream="https://${_chk_rest%%/*}"
+    _chk_path="/${_chk_rest#*/}"
+    [[ "$_chk_rest" == */* ]] || _chk_path="/"
+    SUB_AUTH_BLOCK=$(printf '\t\tforward_auth %s {\n\t\t\turi %s\n\t\t\theader_up Host {upstream_hostport}\n\t\t\ttransport http {\n\t\t\t\tdial_timeout 3s\n\t\t\t\tresponse_header_timeout 5s\n\t\t\t}\n\t\t}' \
+        "$_chk_upstream" "$_chk_path")
+    SUB_AUTH_BLOCK+=$'\n'
+    info "Subscription device check enabled: ${SUB_HWID_CHECK_URL}"
+fi
+
 cat > "$CADDYFILE" <<CADDY
 {
 	https_port ${SELFSTEAL_PORT}
@@ -268,7 +284,7 @@ https://${DOMAIN} {
 	# на https (блок http://${DOMAIN} выше) — так ссылка из бота всегда TLS.
 	@sub path ${SUB_PATH%/} ${SUB_PATH}*
 	handle @sub {
-		reverse_proxy https://127.0.0.1:${SUB_PORT} {
+${SUB_AUTH_BLOCK}		reverse_proxy https://127.0.0.1:${SUB_PORT} {
 			transport http {
 				tls_insecure_skip_verify
 				versions 1.1
